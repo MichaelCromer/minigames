@@ -17,15 +17,7 @@
 #define ASTEROID_DENSITY 1
 
 
-struct Polygon
-{
-    Vector2 *vertices;
-    Vector2 centre;
-    size_t num_vertices;
-};
-
-
-Vector2 vector2_wrap(Vector2 vec, const Vector2 min, const Vector2 max)
+static inline Vector2 vector2_wrap(Vector2 vec, const Vector2 min, const Vector2 max)
 {
     Vector2 res = vec;
     if (res.x < min.x) res.x = max.x;
@@ -51,6 +43,12 @@ static inline float vector2_cross(Vector2 v1, Vector2 v2)
 static inline Vector2 vector2_perp(Vector2 v)
 {
     return (Vector2) { -v.y, v.x };
+}
+
+
+static inline Vector2 vector2_diff(Vector2 v1, Vector2 v2)
+{
+    return (Vector2) { v1.x - v2.x, v1.y - v2.y };
 }
 
 
@@ -231,6 +229,8 @@ static inline float polygon_area_moment_2(Vector2 *vertices, size_t n)
 
 int main(void)
 {
+    bool paused = false;
+
     struct State *state = state_create();
     state_initialise(state);
 
@@ -243,6 +243,9 @@ int main(void)
             state_draw(state);
         }
         EndDrawing();
+
+        if (IsKeyPressed(KEY_P)) paused = !paused;
+        if (paused) continue;
 
         state_update(state, GetFrameTime());
     }

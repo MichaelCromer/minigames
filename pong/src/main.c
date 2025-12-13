@@ -4,6 +4,10 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#define CLAY_IMPLEMENTATION
+#include "lib/clay/clay.h"
+
+
 const int WINDOW_W = 800;
 const int WINDOW_H = 600;
 const float BALL_SPEED = 360.0f;
@@ -13,15 +17,25 @@ const int PADDLE_W = 6;
 const float PADDLE_SPEED = 360.0f;
 const float AI_LOOKAHEAD_SEC = 0.3f;
 
-enum PLAYER_MOVE { NONE, UP, DOWN };
+enum GAME_SCREEN { SCREEN_MAIN, SCREEN_PLAY };
+enum GAME_SCREEN game_screen = SCREEN_MAIN;
+
+enum PLAYER_MOVE { MOVE_NONE, MOVE_UP, MOVE_DOWN };
 struct Player { Vector2 pos; enum PLAYER_MOVE dir; };
 struct Ball { Vector2 pos; Vector2 vel; };
 
-struct Player player1 = { .pos = { 0.0f, 0.0f }, .dir = NONE };
-struct Player player2 = { .pos = { 0.0f, 0.0f }, .dir = NONE };
+struct Player player1 = { .pos = { 0.0f, 0.0f }, .dir = MOVE_NONE };
+struct Player player2 = { .pos = { 0.0f, 0.0f }, .dir = MOVE_NONE };
 struct Ball ball = { .pos = { 0.0f, 0.0f }, .vel = { 0.0f, 0.0f } };
 
 bool ball_is_out = false;
+
+
+/* INTERFACE */
+
+
+
+/* LOGIC */
 
 
 /* update fns */
@@ -30,10 +44,10 @@ bool ball_is_out = false;
 void update_player(struct Player *player, float dt)
 {
     switch (player->dir) {
-        case UP:
+        case MOVE_UP:
             player->pos.y -= PADDLE_SPEED * dt;
             break;
-        case DOWN:
+        case MOVE_DOWN:
             player->pos.y += PADDLE_SPEED * dt;
             break;
         default:
@@ -93,11 +107,11 @@ void pong_reset(void)
 
     player1 = (struct Player) {
         .pos = (Vector2) { 6.0f, (WINDOW_H - PADDLE_H) / 2 },
-        .dir = NONE
+        .dir = MOVE_NONE
     };
     player2 = (struct Player) {
         .pos = (Vector2) { (WINDOW_W - 6.0f - PADDLE_W), (WINDOW_H - PADDLE_H) / 2 },
-        .dir = NONE
+        .dir = MOVE_NONE
     };
 
     float theta = GetRandomValue(0, 360);
@@ -113,9 +127,9 @@ void pong_input(void)
     bool down = IsKeyDown(KEY_DOWN), up = IsKeyDown(KEY_UP);
 
     if ((down && up) || (!down && !up)) {
-        player1.dir = NONE;
+        player1.dir = MOVE_NONE;
     } else {
-        player1.dir = (down) ? DOWN : UP;
+        player1.dir = (down) ? MOVE_DOWN : MOVE_UP;
     }
 }
 
@@ -123,20 +137,20 @@ void pong_input(void)
 void pong_ai(void)
 {
     if ((ball.vel.x < 0) || ((WINDOW_W - ball.pos.x) / ball.vel.x > AI_LOOKAHEAD_SEC)) {
-        player2.dir = NONE;
+        player2.dir = MOVE_NONE;
         return;
     }
 
     if ((player2.pos.y + 2*PADDLE_H/3) < ball.pos.y) {
-        player2.dir = DOWN;
+        player2.dir = MOVE_DOWN;
         return;
     }
     if ((player2.pos.y + PADDLE_H/3) > ball.pos.y) {
-        player2.dir = UP;
+        player2.dir = MOVE_UP;
         return;
     }
 
-    player2.dir = NONE;
+    player2.dir = MOVE_NONE;
 }
 
 

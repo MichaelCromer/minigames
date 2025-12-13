@@ -15,12 +15,12 @@ const float AI_LOOKAHEAD_SEC = 0.3f;
 
 enum PLAYER_MOVE { NONE, UP, DOWN };
 struct Player { Vector2 pos; enum PLAYER_MOVE dir; };
+struct Ball { Vector2 pos; Vector2 vel; };
 
 struct Player player1 = { .pos = { 0.0f, 0.0f }, .dir = NONE };
 struct Player player2 = { .pos = { 0.0f, 0.0f }, .dir = NONE };
+struct Ball ball = { .pos = { 0.0f, 0.0f }, .vel = { 0.0f, 0.0f } };
 
-Vector2 ball_p = { 0.0f, 0.0f };
-Vector2 ball_v = { 0.0f, 0.0f };
 bool ball_is_out = false;
 
 
@@ -43,30 +43,26 @@ void update_player(struct Player *player, float dt)
 }
 
 
-void update_ball(float dt)
+void update_ball(struct Ball *ball, float dt)
 {
-    ball_p = Vector2Add(ball_p, Vector2Scale(ball_v, dt));
+    ball->pos = Vector2Add(ball->pos, Vector2Scale(ball->vel, dt));
 
-    if ((ball_p.y < 0) || (ball_p.y > WINDOW_H)) ball_v.y *= -1;
+    if ((ball->pos.y < 0) || (ball->pos.y > WINDOW_H)) ball->vel.y *= -1;
     if (
-        (ball_p.x < BALL_RADIUS) || (ball_p.x > WINDOW_W - BALL_RADIUS)
+        (ball->pos.x < BALL_RADIUS) || (ball->pos.x > WINDOW_W - BALL_RADIUS)
     ) ball_is_out = true;
-}
 
-
-void update_collisions(void)
-{
-    if (ball_p.x <= player1.pos.x + PADDLE_W + BALL_RADIUS) {
-        if ((ball_p.y < player1.pos.y) || (ball_p.y > player1.pos.y + PADDLE_H)) return;
-        ball_v.x *= -1;
+    if (ball->pos.x <= player1.pos.x + PADDLE_W + BALL_RADIUS) {
+        if ((ball->pos.y < player1.pos.y) || (ball->pos.y > player1.pos.y + PADDLE_H)) return;
+        ball->vel.x *= -1;
     }
-    if (ball_p.x >= player2.pos.x - BALL_RADIUS) {
-        if ((ball_p.y < player2.pos.y) || (ball_p.y > player2.pos.y + PADDLE_H)) return;
-        ball_v.x *= -1;
+    if (ball->pos.x >= player2.pos.x - BALL_RADIUS) {
+        if ((ball->pos.y < player2.pos.y) || (ball->pos.y > player2.pos.y + PADDLE_H)) return;
+        ball->vel.x *= -1;
     }
 
-    ball_p.x = Clamp(
-            ball_p.x,
+    ball->pos.x = Clamp(
+            ball->pos.x,
             player1.pos.x + PADDLE_W + BALL_RADIUS + EPSILON,
             player2.pos.x - BALL_RADIUS - EPSILON
     );
@@ -82,9 +78,9 @@ void draw_player(struct Player *player)
 }
 
 
-void draw_ball(void)
+void draw_ball(struct Ball *ball)
 {
-    DrawCircle(ball_p.x, ball_p.y, BALL_RADIUS, WHITE);
+    DrawCircle(ball->pos.x, ball->pos.y, BALL_RADIUS, WHITE);
 }
 
 
@@ -104,12 +100,10 @@ void pong_reset(void)
         .dir = NONE
     };
 
-    ball_p = (Vector2){ WINDOW_W / 2, WINDOW_H / 2 };
-
     float theta = GetRandomValue(0, 360);
-    ball_v = (Vector2){
-        BALL_SPEED * cosf(theta),
-        BALL_SPEED * sinf(theta)
+    ball = (struct Ball) {
+        .pos = { WINDOW_W / 2, WINDOW_H / 2 },
+        .vel = { BALL_SPEED * cosf(theta), BALL_SPEED * sinf(theta) }
     };
 }
 
@@ -128,16 +122,16 @@ void pong_input(void)
 
 void pong_ai(void)
 {
-    if ((ball_v.x < 0) || ((WINDOW_W - ball_p.x) / ball_v.x > AI_LOOKAHEAD_SEC)) {
+    if ((ball.vel.x < 0) || ((WINDOW_W - ball.pos.x) / ball.vel.x > AI_LOOKAHEAD_SEC)) {
         player2.dir = NONE;
         return;
     }
 
-    if ((player2.pos.y + 2*PADDLE_H/3) < ball_p.y) {
+    if ((player2.pos.y + 2*PADDLE_H/3) < ball.pos.y) {
         player2.dir = DOWN;
         return;
     }
-    if ((player2.pos.y + PADDLE_H/3) > ball_p.y) {
+    if ((player2.pos.y + PADDLE_H/3) > ball.pos.y) {
         player2.dir = UP;
         return;
     }
@@ -153,9 +147,8 @@ void pong_update()
     pong_ai();
     update_player(&player1, dt);
     update_player(&player2, dt);
-    update_ball(dt);
+    update_ball(&ball, dt);
 
-    update_collisions();
     if (ball_is_out) pong_reset();
 }
 
@@ -167,7 +160,7 @@ void pong_draw(void)
 
     draw_player(&player1);
     draw_player(&player2);
-    draw_ball();
+    draw_ball(&ball);
 
     EndDrawing();
 }

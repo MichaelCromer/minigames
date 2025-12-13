@@ -12,7 +12,7 @@
  *  player can 'jump' to whack ball
  *
  *  generically :
- *      input_parse
+ *      pong_input
  *          captures keypresses etc, parses/interprets it, and stores data
  *      state_update
  *          updates global state available to all
@@ -32,13 +32,13 @@ const int paddle_w = 6;
 const float paddle_speed = 360.0f;
 
 enum PLAYER_MOVE { NONE, UP, DOWN };
-enum PLAYER_MOVE player1_move = NONE;
-enum PLAYER_MOVE player2_move = NONE;
-
 struct Player { Vector2 pos; enum PLAYER_MOVE dir; };
-
 struct Player player1 = { .pos = { 0.0f, 0.0f }, .dir = NONE };
 struct Player player2 = { .pos = { 0.0f, 0.0f }, .dir = NONE };
+
+float ai_lookahead_sec = 0.3f;
+int ai_key_press = 0;
+float ai_keypress_duration_min = 0.1f;
 
 Vector2 ball_p = { 0.0f, 0.0f };
 Vector2 ball_v = { 0.0f, 0.0f };
@@ -72,7 +72,7 @@ void update_ball(float dt)
     ball_p = Vector2Add(ball_p, Vector2Scale(ball_v, dt));
 
     if ((ball_p.y < 0) || (ball_p.y > window_h)) ball_v.y *= -1;
-    if ((ball_p.x < 0) || (ball_p.x > window_w)) ball_is_out = true;
+    if ((ball_p.x < ball_r) || (ball_p.x > window_w - ball_r)) ball_is_out = true;
 }
 
 
@@ -86,6 +86,12 @@ void update_collisions(void)
         if ((ball_p.y < player2.pos.y) || (ball_p.y > player2.pos.y + paddle_h)) return;
         ball_v.x *= -1;
     }
+
+    ball_p.x = Clamp(
+            ball_p.x,
+            player1.pos.x + paddle_w + ball_r + EPSILON,
+            player2.pos.x - ball_r - EPSILON
+    );
 }
 
 
@@ -130,7 +136,7 @@ void pong_reset(void)
 }
 
 
-void input_parse(void)
+void pong_input(void)
 {
     bool down = IsKeyDown(KEY_DOWN), up = IsKeyDown(KEY_UP);
 
@@ -142,10 +148,31 @@ void input_parse(void)
 }
 
 
+void pong_ai(void)
+{
+    if ((ball_v.x < 0) || ((window_w - ball_p.x) / ball_v.x > ai_lookahead_sec)) {
+        player2.dir = NONE;
+        return;
+    }
+
+    if ((player2.pos.y + 2*paddle_h/3) < ball_p.y) {
+        player2.dir = DOWN;
+        return;
+    }
+    if ((player2.pos.y + paddle_h/3) > ball_p.y) {
+        player2.dir = UP;
+        return;
+    }
+
+    player2.dir = NONE;
+}
+
+
 void pong_update()
 {
     float dt = GetFrameTime();
-    input_parse();
+    pong_input();
+    pong_ai();
     update_player(&player1, dt);
     update_player(&player2, dt);
     update_ball(dt);

@@ -5,6 +5,11 @@
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
 
+struct Paddle { Vector2 pos; };
+struct Block { Vector2 pos; bool active; };
+
+struct Paddle player = { 0 };
+
 
 void breakout_draw(void)
 {

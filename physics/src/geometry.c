@@ -136,10 +136,7 @@ float polygon_area_moment_2(const struct Polygon p)
  */
 
 
-bool is_point_on_triangle
-(
-    const struct Vector v, const struct Triangle t, const float eps
-)
+bool is_point_on_triangle(const struct Vector v, const struct Triangle t)
 {
     /*
      * need to check if coordinates given by a(t1 - t0) + b(t2 - t0) = p - t0
@@ -162,9 +159,9 @@ bool is_point_on_triangle
     const float y = vector_cross(dt1, dv);
 
     return (
-        ((det > 0) && ((x > -2*eps) && (y > -2*eps) && ((x + y) < (1+2*eps)*det)))
+        ((det > 0) && ((x > 0) && (y > 0) && ((x + y) < det)))
             ||
-        ((det < 0) && ((x < 2*eps) && (y < 2*eps) && ((x + y) > (1+2*eps)*det)))
+        ((det < 0) && ((x < 0) && (y < 0) && ((x + y) > det)))
     );
 }
 
@@ -189,7 +186,7 @@ bool is_point_on_segment
 
 bool is_segment_on_segment
 (
-    const struct Segment s1, const struct Segment s2, const float eps
+    const struct Segment s1, const struct Segment s2
 )
 {
     const struct Vector m1 = vector_sum(s1.v0, s1.v1);
@@ -203,21 +200,21 @@ bool is_segment_on_segment
     const float v = fabsf(vector_cross(d12, ds1));
     const float w = fabsf(vector_cross(ds2, ds1));
 
-    return ((u <= (1 + eps)*w) && (v <= (1 + eps)*w));
+    return ((u <= w) && (v <= w));
 }
 
 
 bool is_segment_on_triangle
 (
-    const struct Segment s, const struct Triangle t, const float eps
+    const struct Segment s, const struct Triangle t
 )
 {
     /* TODO this is wrong because s may be *inside* t */
     return (
-        is_segment_on_segment(s, (struct Segment) { t.v0, t.v1 }, eps)
+        is_segment_on_segment(s, (struct Segment) { t.v0, t.v1 })
             ||
-        is_segment_on_segment(s, (struct Segment) { t.v1, t.v2 }, eps)
+        is_segment_on_segment(s, (struct Segment) { t.v1, t.v2 })
             ||
-        is_segment_on_segment(s, (struct Segment) { t.v2, t.v0 }, eps)
+        is_segment_on_segment(s, (struct Segment) { t.v2, t.v0 })
    );
 }

@@ -1,4 +1,5 @@
 #include <raylib.h>
+#include <raymath.h>
 #include <stdlib.h>
 
 #include "geometry.c"
@@ -7,8 +8,8 @@ const int win_width = 800;
 const int win_height = 600;
 const char* win_title = "Physics Simulation Test";
 
-const size_t n_points = 6;
-const size_t n_segments = 2;
+const size_t n_points = 3000;
+const size_t n_segments = 1;
 const size_t n_triangles = 1;
 
 struct Vector *vv = NULL;
@@ -115,7 +116,7 @@ void points_collision(void)
     if (is_segments_draw) {
         for (size_t i = 0; i < n_points; i++) {
             for (size_t j = 0; j < n_segments; j++) {
-                if (is_point_on_segment(vv[i], ss[j], EPSILON)) {
+                if (is_point_on_segment(vv[i], ss[j], 10)) {
                     points_colour[i] = RED;
                     segments_colour[j] = RED;
                 }
@@ -126,7 +127,7 @@ void points_collision(void)
     if (is_triangles_draw) {
         for (size_t i = 0; i < n_points; i++) {
             for (size_t j = 0; j < n_triangles; j++) {
-                if (is_point_on_triangle(vv[i], tt[j], EPSILON)) {
+                if (is_point_on_triangle(vv[i], tt[j], 1)) {
                     points_colour[i] = RED;
                     triangles_colour[j] = RED;
                 }

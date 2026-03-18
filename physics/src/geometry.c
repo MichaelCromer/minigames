@@ -1,6 +1,5 @@
-#include <raylib.h>
-#include <raymath.h>
 #include <stddef.h>
+#include <math.h>
 
 
 struct Vector { float x; float y; };
@@ -17,6 +16,12 @@ struct Polygon { size_t n; struct Vector *v; };
 float vector_len_sqr(const struct Vector v)
 {
     return (v.x*v.x) + (v.y*v.y);
+}
+
+
+float vector_len(const struct Vector v)
+{
+    return sqrt(vector_len_sqr(v));
 }
 
 
@@ -177,7 +182,7 @@ bool is_point_on_segment
     const float y = fabsf(vector_cross(dv, ds));
 
     return (
-        (det > EPSILON) && (x > -eps*det) && (x < (1 + eps)*det) && (y < eps*det)
+        (x >= 0) && (x <= det) && (y*y <= eps*eps*det)
     );
 }
 

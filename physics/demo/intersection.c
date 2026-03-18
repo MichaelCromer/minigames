@@ -2,11 +2,11 @@
 #include <raymath.h>
 #include <stdlib.h>
 
-#include "geometry.c"
+#include "../src/geometry.c"
 
 const int win_width = 800;
 const int win_height = 600;
-const char* win_title = "Physics Simulation Test";
+const char* win_title = "Physics Simulation Test : Geometric Intersection";
 
 const size_t n_points = 3000;
 const size_t n_segments = 10;

@@ -3,10 +3,10 @@
 #include <stddef.h>
 
 
-struct Point { float x; float y; };
-struct Segment { struct Point p0; struct Point p1; };
-struct Triangle { struct Point p0; struct Point p1; struct Point p2; };
-struct Polygon { size_t n; struct Point *p; };
+struct Vector { float x; float y; };
+struct Segment { struct Vector v0; struct Vector v1; };
+struct Triangle { struct Vector v0; struct Vector v1; struct Vector v2; };
+struct Polygon { size_t n; struct Vector *v; };
 
 
 /*
@@ -14,45 +14,45 @@ struct Polygon { size_t n; struct Point *p; };
  */
 
 
-float vector_len_sqr(const struct Point p)
+float vector_len_sqr(const struct Vector v)
 {
-    return (p.x*p.x) + (p.y*p.y);
+    return (v.x*v.x) + (v.y*v.y);
 }
 
 
-float vector_dot(const struct Point p1, const struct Point p2)
+float vector_dot(const struct Vector v1, const struct Vector v2)
 {
-    return (p1.x*p2.x) + (p1.y*p2.y);
+    return (v1.x*v2.x) + (v1.y*v2.y);
 }
 
 
-float vector_cross(const struct Point p1, const struct Point p2)
+float vector_cross(const struct Vector v1, const struct Vector v2)
 {
-    return (p1.x*p2.y) - (p1.y*p2.x);
+    return (v1.x*v2.y) - (v1.y*v2.x);
 }
 
 
-struct Point vector_perp(const struct Point v)
+struct Vector vector_perp(const struct Vector v)
 {
-    return (struct Point) { -v.y, v.x };
+    return (struct Vector) { -v.y, v.x };
 }
 
 
-struct Point vector_scale(const struct Point p, const float s)
+struct Vector vector_scale(const struct Vector v, const float s)
 {
-    return (struct Point) { s*p.x, s*p.y };
+    return (struct Vector) { s*v.x, s*v.y };
 }
 
 
-struct Point vector_sum(const struct Point p1, const struct Point p2)
+struct Vector vector_sum(const struct Vector v1, const struct Vector v2)
 {
-    return (struct Point) { p1.x + p2.x, p1.y + p2.y };
+    return (struct Vector) { v1.x + v2.x, v1.y + v2.y };
 }
 
 
-struct Point vector_diff(const struct Point p1, const struct Point p2)
+struct Vector vector_diff(const struct Vector v1, const struct Vector v2)
 {
-    return (struct Point) { p1.x - p2.x, p1.y - p2.y };
+    return (struct Vector) { v1.x - v2.x, v1.y - v2.y };
 }
 
 
@@ -64,15 +64,15 @@ struct Point vector_diff(const struct Point p1, const struct Point p2)
 float triangle_area(const struct Triangle t)
 {
     return fabsf(
-        vector_cross(vector_diff(t.p1, t.p0), vector_diff(t.p2, t.p0))
+        vector_cross(vector_diff(t.v1, t.v0), vector_diff(t.v2, t.v0))
     );
 }
 
 
-struct Triangle triangle_translate(const struct Triangle t, const struct Point v)
+struct Triangle triangle_translate(const struct Triangle t, const struct Vector v)
 {
     return (struct Triangle) {
-        vector_sum(t.p0, v), vector_sum(t.p1, v), vector_sum(t.p2, v)
+        vector_sum(t.v0, v), vector_sum(t.v1, v), vector_sum(t.v2, v)
     };
 }
 
@@ -85,19 +85,19 @@ struct Triangle triangle_translate(const struct Triangle t, const struct Point v
 float polygon_area_moment_0(const struct Polygon p)
 {
     float m0 = 0;
-    for (size_t i = 0; i < p.n; i++) { m0 += vector_cross(p.p[i], p.p[(i+1) % p.n]); }
+    for (size_t i = 0; i < p.n; i++) { m0 += vector_cross(p.v[i], p.v[(i+1) % p.n]); }
     return 0.5f * fabsf(m0);
 }
 
 
-struct Point polygon_area_moment_1(const struct Polygon p)
+struct Vector polygon_area_moment_1(const struct Polygon p)
 {
     float factor = 0, denom = 0;
-    struct Point m1 = { 0 };
-    struct Point curr = { 0 }, next = p.p[0];
+    struct Vector m1 = { 0 };
+    struct Vector curr = { 0 }, next = p.v[0];
 
     for (size_t i = 0; i < p.n; i++) {
-        curr = next, next = p.p[(i+1) % p.n];
+        curr = next, next = p.v[(i+1) % p.n];
         factor = vector_cross(curr, next);
         m1 = vector_sum(m1, (vector_scale(vector_sum(curr, next), factor)));
         denom += factor;
@@ -111,10 +111,10 @@ float polygon_area_moment_2(const struct Polygon p)
 {
     float m2 = 0;
     float factor = 0, denom = 0;
-    struct Point curr = { 0 }, next = p.p[0];
+    struct Vector curr = { 0 }, next = p.v[0];
 
     for (size_t i = 0; i < p.n; i++) {
-        curr = next, next = p.p[(i+1) % p.n];
+        curr = next, next = p.v[(i+1) % p.n];
         factor = vector_cross(curr, next);
         m2 += factor * (
             vector_len_sqr(curr) + vector_dot(curr, next) + vector_len_sqr(next)
@@ -131,7 +131,10 @@ float polygon_area_moment_2(const struct Polygon p)
  */
 
 
-bool is_point_on_triangle(const struct Point p, const struct Triangle t, const float eps)
+bool is_point_on_triangle
+(
+    const struct Vector v, const struct Triangle t, const float eps
+)
 {
     /*
      * need to check if coordinates given by a(t1 - t0) + b(t2 - t0) = p - t0
@@ -145,13 +148,13 @@ bool is_point_on_triangle(const struct Point p, const struct Triangle t, const f
      *  check requires matching sign! i.e. dt1 x dt2 may be negative
      */
 
-    const struct Point dt1 = vector_diff(t.p1, t.p0);
-    const struct Point dt2 = vector_diff(t.p2, t.p0);
-    const struct Point dp = vector_diff(p, t.p0);
+    const struct Vector dt1 = vector_diff(t.v1, t.v0);
+    const struct Vector dt2 = vector_diff(t.v2, t.v0);
+    const struct Vector dv = vector_diff(v, t.v0);
 
     const float det = vector_cross(dt1, dt2);
-    const float x = vector_cross(dp, dt2);
-    const float y = vector_cross(dt1, dp);
+    const float x = vector_cross(dv, dt2);
+    const float y = vector_cross(dt1, dv);
 
     return (
         ((det > 0) && ((x > -2*eps) && (y > -2*eps) && ((x + y) < (1+2*eps)*det)))
@@ -161,14 +164,17 @@ bool is_point_on_triangle(const struct Point p, const struct Triangle t, const f
 }
 
 
-bool is_point_on_segment(const struct Point p, const struct Segment s, const float eps)
+bool is_point_on_segment
+(
+    const struct Vector v, const struct Segment s, const float eps
+)
 {
-    const struct Point ds = vector_diff(s.p1, s.p0);
-    const struct Point dp = vector_diff(p, s.p0);
+    const struct Vector ds = vector_diff(s.v1, s.v0);
+    const struct Vector dv = vector_diff(v, s.v0);
 
     const float det = vector_len_sqr(ds);
-    const float x = vector_dot(dp, ds);
-    const float y = fabsf(vector_cross(dp, ds));
+    const float x = vector_dot(dv, ds);
+    const float y = fabsf(vector_cross(dv, ds));
 
     return (
         (det > EPSILON) && (x > -eps*det) && (x < (1 + eps)*det) && (y < eps*det)
@@ -181,12 +187,12 @@ bool is_segment_on_segment
     const struct Segment s1, const struct Segment s2, const float eps
 )
 {
-    const struct Point m1 = vector_sum(s1.p0, s1.p1);
-    const struct Point m2 = vector_sum(s2.p0, s2.p1);
+    const struct Vector m1 = vector_sum(s1.v0, s1.v1);
+    const struct Vector m2 = vector_sum(s2.v0, s2.v1);
 
-    const struct Point ds1 = vector_diff(s1.p1, s1.p0);
-    const struct Point ds2 = vector_diff(s2.p1, s2.p0);
-    const struct Point d12 = vector_diff(m2, m1);
+    const struct Vector ds1 = vector_diff(s1.v1, s1.v0);
+    const struct Vector ds2 = vector_diff(s2.v1, s2.v0);
+    const struct Vector d12 = vector_diff(m2, m1);
 
     const float u = fabsf(vector_cross(d12, ds2));
     const float v = fabsf(vector_cross(d12, ds1));
@@ -201,11 +207,12 @@ bool is_segment_on_triangle
     const struct Segment s, const struct Triangle t, const float eps
 )
 {
+    /* TODO this is wrong because s may be *inside* t */
     return (
-        is_segment_on_segment(s, (struct Segment) { t.p0, t.p1 }, eps)
+        is_segment_on_segment(s, (struct Segment) { t.v0, t.v1 }, eps)
             ||
-        is_segment_on_segment(s, (struct Segment) { t.p1, t.p2 }, eps)
+        is_segment_on_segment(s, (struct Segment) { t.v1, t.v2 }, eps)
             ||
-        is_segment_on_segment(s, (struct Segment) { t.p2, t.p0 }, eps)
+        is_segment_on_segment(s, (struct Segment) { t.v2, t.v0 }, eps)
    );
 }

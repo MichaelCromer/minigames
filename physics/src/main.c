@@ -11,7 +11,7 @@ const size_t n_points = 6;
 const size_t n_segments = 2;
 const size_t n_triangles = 1;
 
-struct Point *pp = NULL;
+struct Vector *vv = NULL;
 struct Segment *ss = NULL;
 struct Triangle *tt = NULL;
 
@@ -24,15 +24,15 @@ bool is_segments_draw = false;
 bool is_triangles_draw = false;
 
 
-Vector2 vector2(const struct Point p)
+Vector2 vector2(const struct Vector p)
 {
     return (Vector2) { p.x, p.y };
 }
 
 
-struct Point util_random_point(void)
+struct Vector util_random_point(void)
 {
-    return (struct Point) {
+    return (struct Vector) {
         GetRandomValue(0, win_width), GetRandomValue(0, win_height)
     };
 }
@@ -41,7 +41,7 @@ struct Point util_random_point(void)
 void points_randomise(void)
 {
     for (size_t i = 0; i < n_points; i++)
-        pp[i] = util_random_point();
+        vv[i] = util_random_point();
 }
 
 
@@ -60,13 +60,13 @@ void triangles_randomise(void)
         };
 
         if (vector_cross(
-            vector_diff(tt[i].p1, tt[i].p0),
-            vector_diff(tt[i].p2, tt[i].p0)
+            vector_diff(tt[i].v1, tt[i].v0),
+            vector_diff(tt[i].v2, tt[i].v0)
         ) < 0) {
-            tt[i].p2 = vector_sum(tt[i].p1, tt[i].p2);
-            tt[i].p1 = vector_diff(tt[i].p1, tt[i].p2);
-            tt[i].p2 = vector_sum(tt[i].p1, tt[i].p2);
-            tt[i].p1 = vector_scale(tt[i].p1, -1);
+            tt[i].v2 = vector_sum(tt[i].v1, tt[i].v2);
+            tt[i].v1 = vector_diff(tt[i].v1, tt[i].v2);
+            tt[i].v2 = vector_sum(tt[i].v1, tt[i].v2);
+            tt[i].v1 = vector_scale(tt[i].v1, -1);
         }
     }
 }
@@ -75,14 +75,14 @@ void triangles_randomise(void)
 void points_draw(void)
 {
     for (size_t i = 0; i < n_points; i++)
-        DrawCircle(pp[i].x, pp[i].y, 3, points_colour[i]);
+        DrawCircle(vv[i].x, vv[i].y, 3, points_colour[i]);
 }
 
 
 void segments_draw(void)
 {
     for (size_t i = 0; i < n_segments; i++)
-        DrawLine(ss[i].p0.x, ss[i].p0.y, ss[i].p1.x, ss[i].p1.y, segments_colour[i]);
+        DrawLine(ss[i].v0.x, ss[i].v0.y, ss[i].v1.x, ss[i].v1.y, segments_colour[i]);
 }
 
 
@@ -90,7 +90,7 @@ void triangles_draw(void)
 {
     for (size_t i = 0; i < n_triangles; i++)
         DrawTriangleLines(
-            vector2(tt[i].p0), vector2(tt[i].p1), vector2(tt[i].p2), triangles_colour[i]
+            vector2(tt[i].v0), vector2(tt[i].v1), vector2(tt[i].v2), triangles_colour[i]
         );
 }
 
@@ -115,7 +115,7 @@ void points_collision(void)
     if (is_segments_draw) {
         for (size_t i = 0; i < n_points; i++) {
             for (size_t j = 0; j < n_segments; j++) {
-                if (is_point_on_segment(pp[i], ss[j], EPSILON)) {
+                if (is_point_on_segment(vv[i], ss[j], EPSILON)) {
                     points_colour[i] = RED;
                     segments_colour[j] = RED;
                 }
@@ -126,7 +126,7 @@ void points_collision(void)
     if (is_triangles_draw) {
         for (size_t i = 0; i < n_points; i++) {
             for (size_t j = 0; j < n_triangles; j++) {
-                if (is_point_on_triangle(pp[i], tt[j], EPSILON)) {
+                if (is_point_on_triangle(vv[i], tt[j], EPSILON)) {
                     points_colour[i] = RED;
                     triangles_colour[j] = RED;
                 }
@@ -205,7 +205,7 @@ void initialise(void)
     InitWindow(win_width, win_height, win_title);
     SetRandomSeed(0);
 
-    pp = malloc(n_points * sizeof(struct Point));
+    vv = malloc(n_points * sizeof(struct Vector));
     ss = malloc(n_segments * sizeof(struct Segment));
     tt = malloc(n_triangles * sizeof(struct Triangle));
 

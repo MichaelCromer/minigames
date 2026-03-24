@@ -1,6 +1,3 @@
-#include "geometry.c"
-
-
 struct Body
 {
     float rot;
@@ -11,39 +8,43 @@ struct Body
     struct Vector pos;
     struct Vector v_lin;
     struct Polygon pts;
-}
+};
 
 
 struct Vector body_pos(const struct Body *b) { return b->pos; }
 
-void body_set_pos(const struct Body *b, const Vector v) { b->pos = v; }
-void body_set_mass(const struct Body *b, const float m) { m ? b->m_inv = 1/m : return; }
+void body_set_pos(struct Body *b, const struct Vector v) { b->pos = v; }
 
-void body_immobilise(const struct Body *b) { b->m_inv = 0; b->I_inv = 0; }
+void body_set_mass(struct Body *b, const float m)
+{
+    if (m) b->m_inv = 1/m;
+}
+
+void body_immobilise(struct Body *b) { b->m_inv = 0; b->I_inv = 0; }
 
 
-void body_impulse(const struct Body *b, const Vector dp)
+void body_impulse(struct Body *b, const struct Vector dp)
 {
     b->v_lin = vector_sum(b->v_lin, dp);
 }
 
 
-void body_force(const struct Body *b, const Vector F, const float dt)
+void body_force(struct Body *b, const struct Vector F, const float dt)
 {
     b->v_lin = vector_sum(b->v_lin, vector_scale(F, b->m_inv*dt));
 }
 
 
-void body_accelerate(const struct Body *b, const Vector a, const float dt)
+void body_accelerate(struct Body *b, const struct Vector a, const float dt)
 {
     b->v_lin = vector_sum(b->v_lin, vector_scale(a, dt));
 }
 
 
-void body_update(const struct Body *b, const float dt)
+void body_kinematics(struct Body *b, const float dt)
 {
     b->pos = vector_sum(b->pos, vector_scale(b->v_lin, dt));
-    b->rot += v_ang*dt;
+    b->rot += b->v_ang*dt;
 }
 
 /*

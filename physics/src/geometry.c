@@ -87,6 +87,45 @@ struct Triangle triangle_translate(const struct Triangle t, const struct Vector 
  */
 
 
+
+void polygon_destroy(struct Polygon *p)
+{
+    if (!p) return;
+    if (p->v) free(p->v);
+    p->v = NULL;
+    p->n = 0;
+    free(p);
+}
+
+
+struct Polygon *polygon_create(size_t n)
+{
+    struct Polygon *p = malloc(sizeof(struct Polygon));
+    if (!p) return NULL;
+    p->v = malloc(n * sizeof(struct Vector));
+
+    if (!p->v) {
+        polygon_destroy(p);
+        return NULL;
+    }
+
+    p->n = n;
+    return p;
+}
+
+
+struct Polygon *polygon_duplicate(const struct Polygon *p)
+{
+    struct Polygon *q = polygon_create(p->n);
+    if (!q) return NULL;
+    for (size_t i = 0; i < q->n; i++) {
+        q->v[i] = p->v[i];
+    }
+
+    return q;
+}
+
+
 float polygon_area_moment_0(const struct Polygon p)
 {
     float m0 = 0;

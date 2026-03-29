@@ -61,37 +61,16 @@ struct Vector vector_diff(const struct Vector v1, const struct Vector v2)
 }
 
 
-/*
- *  TRIANGLE
- */
-
-
-float triangle_area(const struct Triangle t)
-{
-    return fabsf(
-        vector_cross(vector_diff(t.v1, t.v0), vector_diff(t.v2, t.v0))
-    );
-}
-
-
-struct Triangle triangle_translate(const struct Triangle t, const struct Vector v)
-{
-    return (struct Triangle) {
-        vector_sum(t.v0, v), vector_sum(t.v1, v), vector_sum(t.v2, v)
-    };
-}
-
 
 /*
  * POLYGON
  */
 
 
-
 void polygon_destroy(struct Polygon *p)
 {
     if (!p) return;
-    if (p->v) free(p->v);
+    free(p->v);
     p->v = NULL;
     p->n = 0;
     free(p);
@@ -110,6 +89,8 @@ struct Polygon *polygon_create(size_t n)
     }
 
     p->n = n;
+    p->v = NULL;
+
     return p;
 }
 
@@ -177,18 +158,6 @@ float polygon_area_moment_2(const struct Polygon p)
 
 bool is_point_on_triangle(const struct Vector v, const struct Triangle t)
 {
-    /*
-     * need to check if coordinates given by a(t1 - t0) + b(t2 - t0) = p - t0
-     * are within bounds (i.e. have a > 0 and b > 0 and a + b < 1)
-     *
-     *  dt1 = (t1 - t0),    dt2 = (t2 - t0),    dp = (p - t0)
-     *
-     * get
-     *  a(dt1 x dt2) = dp x dt2,    b(dt1 x dt2) = dt1 x dp
-     *
-     *  check requires matching sign! i.e. dt1 x dt2 may be negative
-     */
-
     const struct Vector dt1 = vector_diff(t.v1, t.v0);
     const struct Vector dt2 = vector_diff(t.v2, t.v0);
     const struct Vector dv = vector_diff(v, t.v0);
@@ -228,12 +197,11 @@ bool is_segment_on_segment
     const struct Segment s1, const struct Segment s2
 )
 {
-    const struct Vector m1 = vector_sum(s1.v0, s1.v1);
-    const struct Vector m2 = vector_sum(s2.v0, s2.v1);
-
     const struct Vector ds1 = vector_diff(s1.v1, s1.v0);
     const struct Vector ds2 = vector_diff(s2.v1, s2.v0);
-    const struct Vector d12 = vector_diff(m2, m1);
+    const struct Vector d12 = vector_diff(
+        vector_sum(s2.v0, s2.v1), vector_sum(s1.v0, s1.v1)
+    );
 
     const float u = fabsf(vector_cross(d12, ds2));
     const float v = fabsf(vector_cross(d12, ds1));

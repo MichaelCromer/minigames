@@ -7,14 +7,37 @@ struct Body
     float R;
     struct Vector pos;
     struct Vector v_lin;
-    struct Polygon pts;
+    struct Polygon *pts;
 };
 
 
+void body_destroy(struct Body *b)
+{
+    if (!b) return;
+    polygon_destroy(b->pts);
+    *b = (struct Body) { 0 };
+    free(b);
+}
+
+
+struct Body *body_create(size_t n)
+{
+    struct Body *b = malloc(sizeof(struct Body));
+    if (!b) return NULL;
+
+    *b = (struct Body) { 0 };
+    b->pts = polygon_create(n);
+    if (!b->pts) {
+        body_destroy(b);
+        return NULL;
+    }
+
+    return b;
+}
+
+
 struct Vector body_pos(const struct Body *b) { return b->pos; }
-
 void body_set_pos(struct Body *b, const struct Vector v) { b->pos = v; }
-
 void body_set_mass(struct Body *b, const float m)
 {
     if (m) b->m_inv = 1/m;

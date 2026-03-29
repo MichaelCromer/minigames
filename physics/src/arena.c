@@ -110,6 +110,20 @@ int rigidbodyarena_malloc(struct RigidBodyArena *rba, size_t n)
     }
 
     rba->n_max = n;
+    for (size_t i = 0; i < n; i++) {
+        rba->id[i] = 0;
+        rba->ix[i] = 0;
+        rba->rot[i] = 0;
+        rba->v_ang[i] = 0;
+        rba->I_inv[i] = 0;
+        rba->m_inv[i] = 0;
+        rba->R[i] = 0;
+        rba->pos[i] = (struct Vector) { 0 };
+        rba->v_lin[i] = (struct Vector) { 0 };
+        rba->pts[i] = NULL;
+    }
+    rba->n = 0;
+
     return 0;
 }
 
@@ -122,8 +136,6 @@ struct RigidBodyArena *rigidbodyarena_create(size_t n)
         rigidbodyarena_destroy(rba);
         return NULL;
     }
-
-    rigidbodyarena_clear(rba);
 
     return rba;
 }
@@ -161,7 +173,7 @@ ssize_t rigidbodyarena_register(struct RigidBodyArena *rba, const struct Body *b
     rba->v_lin[rba->n] = b->v_lin;
 
     polygon_destroy(rba->pts[rba->n]);
-    rba->pts[rba->n] = polygon_duplicate(&(b->pts));
+    rba->pts[rba->n] = polygon_duplicate(b->pts);
 
     size_t id = rba->id[rba->n];
     rba->ix[id] = rba->n;

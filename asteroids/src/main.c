@@ -57,25 +57,31 @@ enum ASTEROID_LEVEL
  */
 
 
+struct Polygon
+{
+    Vector2 *vertices[ASTEROID_VERTICES_MAX];
+};
+
+
 struct Asteroids
 {
     size_t len;
-    enum ASTEROID_LEVEL level[NUM_ASTEROIDS_MAX];
-    float rotation[NUM_ASTEROIDS_MAX];
-    float spin[NUM_ASTEROIDS_MAX];
-    float hitpoints[NUM_ASTEROIDS_MAX];
-    Vector2 corners[NUM_ASTEROIDS_MAX][ASTEROID_VERTICES_MAX];
-    Vector2 position[NUM_ASTEROIDS_MAX];
-    Vector2 velocity[NUM_ASTEROIDS_MAX];
+    enum ASTEROID_LEVEL *level;
+    float *rotation;
+    float *spin;
+    float *hitpoints;
+    struct Polygon *polygons;
+    Vector2 *position;
+    Vector2 *velocity;
 };
 
 
 struct Bullets
 {
     size_t len;
-    float lifetime[NUM_BULLETS_MAX];
-    Vector2 position[NUM_BULLETS_MAX];
-    Vector2 velocity[NUM_BULLETS_MAX];
+    float *lifetime;
+    Vector2 *position;
+    Vector2 *velocity;
 };
 
 
@@ -165,6 +171,10 @@ static inline Vector2 vector2_wrap(Vector2 vec, const Rectangle rect)
 void bullets_initialise(struct Bullets *bullets)
 {
     bullets->len = 0;
+
+    bullets->position = malloc(NUM_BULLETS_MAX * sizeof(Vector2));
+    bullets->velocity = malloc(NUM_BULLETS_MAX * sizeof(Vector2));
+    bullets->lifetime = malloc(NUM_BULLETS_MAX * sizeof(float));
 }
 
 
@@ -207,6 +217,14 @@ void bullets_draw(struct Bullets *bullets)
     for (size_t i = 0; i < bullets->len; i++) {
         DrawCircleV(bullets->position[i], 2, WHITE);
     }
+}
+
+
+void bullets_deinitialise(struct Bullets *bullets)
+{
+    free(bullets->position);
+    free(bullets->velocity);
+    free(bullets->lifetime);
 }
 
 
@@ -375,6 +393,8 @@ void update(float dt)
 void deinitialise(void)
 {
     CloseWindow();
+
+    bullets_deinitialise(&state.bullets);
 }
 
 

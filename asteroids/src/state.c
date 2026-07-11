@@ -78,7 +78,7 @@ void state_update(struct State *state, float dt)
                 BULLET_VELOCITY * cos(p->rotation) + p->velocity.x,
                 BULLET_VELOCITY * sin(p->rotation) + p->velocity.y
             },
-            .lifetime = BULLET_LIFTIME,
+            .lifetime = 100000*BULLET_LIFTIME,
         };
 
         bulletqueue_insert(state->bullets, b);

@@ -1,11 +1,3 @@
-struct Bullet
-{
-    Vector2 position;
-    Vector2 velocity;
-    float lifetime;
-};
-
-
 struct BulletQueue
 {
     struct Bullet *bullets;
